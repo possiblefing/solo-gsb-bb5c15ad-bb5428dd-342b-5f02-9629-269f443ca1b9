@@ -787,6 +787,141 @@ pre {
   padding: 0 6px;
 }
 
+/* ---------- 受保护路径检查 ---------- */
+.protected-panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.protected-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.protected-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.protected-header .hint {
+  color: var(--text-dim);
+  font-size: 12px;
+}
+
+.protected-input {
+  min-height: 64px;
+}
+
+.protected-input.invalid {
+  border-color: var(--red);
+}
+
+.protected-panel .panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.protected-status {
+  font-size: 12px;
+  align-self: center;
+}
+
+.protected-status.bad {
+  color: var(--red);
+}
+
+.protected-status.dirty {
+  color: var(--yellow);
+}
+
+.protected-summary {
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+.protected-summary.none {
+  color: var(--text-dim);
+  border: 1px dashed var(--border);
+}
+
+.protected-summary.ok {
+  background: rgba(52, 201, 142, 0.12);
+  border: 1px solid var(--green);
+  color: var(--green);
+}
+
+.protected-summary.pending {
+  background: rgba(232, 179, 57, 0.1);
+  border: 1px solid var(--yellow);
+  color: var(--text);
+}
+
+.protected-hit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  margin-top: 8px;
+}
+
+.protected-hit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 10px;
+  background: var(--bg-panel-2);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-wrap: wrap;
+}
+
+.protected-hit-row:hover {
+  border-color: var(--accent);
+}
+
+.protected-hit-row.confirmed {
+  border-color: var(--green);
+}
+
+.protected-hit-row input[type='checkbox'] {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--green);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.protected-hit-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.protected-rule-chip {
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 11.5px;
+  color: var(--purple);
+  background: rgba(164, 120, 255, 0.12);
+  border-radius: 4px;
+  padding: 0 6px;
+}
+
 /* ---------- 输出阶段 ---------- */
 .schema-panel {
   background: var(--bg-panel);

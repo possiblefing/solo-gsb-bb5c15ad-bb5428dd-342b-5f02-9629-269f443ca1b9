@@ -39,6 +39,8 @@ describe('OutputStage Schema 校验集成', () => {
     merged: { id: 1, tag: 'c' } as unknown as JsonValue,
     patch: [],
     ...traceProps({ id: 0 } as unknown as JsonValue, { id: 1, tag: 'c' } as unknown as JsonValue),
+    protectedConfig: '',
+    onProtectedConfigChange: () => {},
     onBack: () => {},
     onRestart: () => {},
   };
