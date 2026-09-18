@@ -11,6 +11,7 @@ import {
 } from './merge/threeWayMerge';
 import { isAbsent, type JsonValue } from './merge/types';
 import type { CompiledSchema } from './merge/schema';
+import type { ProtectedRule } from './merge/protectedPaths';
 import {
   restoreResolutions,
   type RestoreSummary,
@@ -41,6 +42,8 @@ export default function App() {
   // Schema 校验状态在「返回调整 ↔ 输出」之间保留，重新开始时清空
   const [schemaEnabled, setSchemaEnabled] = useState(false);
   const [schema, setSchema] = useState<CompiledSchema | null>(null);
+  // 受保护路径规则同样在「返回调整 ↔ 输出」之间保留（确认状态在输出页内，重新生成即清空）
+  const [protectedRules, setProtectedRules] = useState<ProtectedRule[]>([]);
 
   const handleMerge = (base: JsonValue, ours: JsonValue, theirs: JsonValue) => {
     setBaseDoc(base);
@@ -115,6 +118,7 @@ export default function App() {
     setRestoreInfo(null);
     setSchema(null);
     setSchemaEnabled(false);
+    setProtectedRules([]);
   };
 
   const canUndo = history.past.length > 0;
@@ -161,6 +165,8 @@ export default function App() {
             schema={schema}
             onSchemaEnabledChange={setSchemaEnabled}
             onSchemaChange={setSchema}
+            protectedRules={protectedRules}
+            onProtectedRulesChange={setProtectedRules}
             onBack={() => setStage('merge')}
             onRestart={handleRestart}
           />

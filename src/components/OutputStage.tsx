@@ -5,11 +5,14 @@ import type { CompiledSchema } from '../merge/schema';
 import { validateMerged } from '../merge/schema';
 import type { MergeResult, Resolutions } from '../merge/threeWayMerge';
 import { buildPointerLines, resolveLine } from '../merge/jsonLineMap';
+import { buildDecisionTrace } from '../merge/decisionTrace';
+import { checkProtectedPaths, type ProtectedRule } from '../merge/protectedPaths';
 import { downloadText } from '../download';
 import SchemaPanel from './SchemaPanel';
 import ValidationIssues from './ValidationIssues';
 import PatchAuditPanel from './PatchAuditPanel';
 import DecisionTracePanel from './DecisionTracePanel';
+import ProtectedPathsPanel from './ProtectedPathsPanel';
 
 interface Props {
   base: JsonValue;
@@ -22,6 +25,9 @@ interface Props {
   schema: CompiledSchema | null;
   onSchemaEnabledChange: (v: boolean) => void;
   onSchemaChange: (s: CompiledSchema | null) => void;
+  /** 受保护路径规则（App 级状态，返回调整时保留，重新开始时清空） */
+  protectedRules: ProtectedRule[];
+  onProtectedRulesChange: (rules: ProtectedRule[]) => void;
   onBack: () => void;
   onRestart: () => void;
 }
@@ -74,6 +80,8 @@ export default function OutputStage({
   schema,
   onSchemaEnabledChange,
   onSchemaChange,
+  protectedRules,
+  onProtectedRulesChange,
   onBack,
   onRestart,
 }: Props) {
@@ -89,6 +97,34 @@ export default function OutputStage({
     [schemaEnabled, schema, merged],
   );
   const errorCount = groups.reduce((n, g) => n + g.issues.length, 0);
+
+  // 受保护路径检查：以决策溯源的最终变更为输入，命中项按变更路径合并
+  const traceEntries = useMemo(
+    () => buildDecisionTrace(mergeResult, resolutions, merged),
+    [mergeResult, resolutions, merged],
+  );
+  const protectedHits = useMemo(
+    () => checkProtectedPaths(protectedRules, traceEntries),
+    [protectedRules, traceEntries],
+  );
+  const [confirmedPaths, setConfirmedPaths] = useState<ReadonlySet<string>>(() => new Set());
+
+  // 命中集合变化（应用新规则，或返回调整后重新生成结果）时清空确认，需重新逐项确认
+  useEffect(() => {
+    setConfirmedPaths(new Set());
+  }, [protectedHits]);
+
+  const toggleConfirm = (pointer: string) => {
+    setConfirmedPaths((prev) => {
+      const next = new Set(prev);
+      if (next.has(pointer)) next.delete(pointer);
+      else next.add(pointer);
+      return next;
+    });
+  };
+
+  const protectedPending = protectedHits.filter((h) => !confirmedPaths.has(h.pointer)).length;
+  const downloadsBlocked = protectedPending > 0;
 
   // JSON Pointer → 渲染行号
   const pointerLines = useMemo(() => buildPointerLines(mergedText), [mergedText]);
@@ -133,7 +169,12 @@ export default function OutputStage({
             <button className="small" onClick={() => void handleCopy(mergedText, '合并结果 ')}>
               复制
             </button>
-            <button className="small" onClick={() => downloadText('merged.json', mergedText)}>
+            <button
+              className="small"
+              disabled={downloadsBlocked}
+              title={downloadsBlocked ? '受保护路径命中未全部确认，暂不可下载' : undefined}
+              onClick={() => downloadText('merged.json', mergedText)}
+            >
               下载 merged.json
             </button>
             {showValidation && errorCount > 0 && (
@@ -142,6 +183,14 @@ export default function OutputStage({
                 title="合并结果未通过 Schema 校验，仍可下载；点击错误路径可定位"
               >
                 ⚠ {errorCount} 个校验错误
+              </span>
+            )}
+            {downloadsBlocked && (
+              <span
+                className="download-warn"
+                title="受保护路径检查存在未确认的命中项，全部确认后可下载"
+              >
+                ⚠ {protectedPending} 项受保护命中待确认
               </span>
             )}
           </div>
@@ -153,12 +202,32 @@ export default function OutputStage({
             <button className="small" onClick={() => void handleCopy(patchText, '补丁 ')}>
               复制
             </button>
-            <button className="small" onClick={() => downloadText('patch.json', patchText)}>
+            <button
+              className="small"
+              disabled={downloadsBlocked}
+              title={downloadsBlocked ? '受保护路径命中未全部确认，暂不可下载' : undefined}
+              onClick={() => downloadText('patch.json', patchText)}
+            >
               下载 patch.json
             </button>
+            {downloadsBlocked && (
+              <span
+                className="download-warn"
+                title="受保护路径检查存在未确认的命中项，全部确认后可下载"
+              >
+                ⚠ {protectedPending} 项受保护命中待确认
+              </span>
+            )}
           </div>
         </div>
       </div>
+      <ProtectedPathsPanel
+        rules={protectedRules}
+        hits={protectedHits}
+        confirmed={confirmedPaths}
+        onToggleConfirm={toggleConfirm}
+        onRulesChange={onProtectedRulesChange}
+      />
       <PatchAuditPanel base={base} merged={merged} autoPatch={patch} onCopy={handleCopy} />
       <DecisionTracePanel mergeResult={mergeResult} resolutions={resolutions} merged={merged} />
       <div className="output-actions">
